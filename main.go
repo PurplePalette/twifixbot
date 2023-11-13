@@ -24,7 +24,7 @@ func init() {
 		os.Exit(1)
 	}
 
-	twitterURLRegex = regexp.MustCompile(`https:\/\/twitter\.com\/([a-zA-Z0-9_]+)\/status\/(\d+)`)
+	twitterURLRegex = regexp.MustCompile(`https:\/\/(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/status\/(\d+)`)
 }
 
 func main() {
@@ -81,7 +81,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if twitterURLRegex.MatchString(m.Content) {
 		// replace twitter.com with vxtwitter.com
-		newUrl := twitterURLRegex.ReplaceAllString(m.Content, "https://vxtwitter.com/$1/status/$2")
+		newUrl := twitterURLRegex.ReplaceAllString(m.Content, "https://vxtwitter.com/$2/status/$3")
 		s.ChannelMessageSend(m.ChannelID, newUrl)
 	}
 }
