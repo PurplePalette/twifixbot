@@ -10,7 +10,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 # ソースコードをコピー
-COPY main.go ./
+COPY *.go ./
 
 # アプリケーションをビルド
 RUN CGO_ENABLED=0 GOOS=linux go build -o twifixbot

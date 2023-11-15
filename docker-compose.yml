@@ -5,6 +5,7 @@ services:
     build: .
     environment:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - FXTWITTER_API_URL=https://api-fxtwitter.palettetool.com
     volumes:
       - .:/app
     restart: always

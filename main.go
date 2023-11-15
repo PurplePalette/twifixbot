@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/signal"
 	"regexp"
@@ -10,10 +13,10 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// Variables used for command line parameters
 var (
 	Token           string
-	twitterURLRegex *regexp.Regexp
+	TwitterURLRegex *regexp.Regexp
+	FxTwitterApiURL string
 )
 
 func init() {
@@ -24,7 +27,8 @@ func init() {
 		os.Exit(1)
 	}
 
-	twitterURLRegex = regexp.MustCompile(`https:\/\/(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/status\/(\d+)`)
+	TwitterURLRegex = regexp.MustCompile(`https:\/\/(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/status\/(\d+)`)
+	FxTwitterApiURL = os.Getenv("FXTWITTER_API_URL")
 }
 
 func main() {
@@ -79,9 +83,62 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(m.ChannelID, "Ping!")
 	}
 
-	if twitterURLRegex.MatchString(m.Content) {
-		// replace twitter.com with vxtwitter.com
-		newUrl := twitterURLRegex.ReplaceAllString(m.Content, "https://vxtwitter.com/$2/status/$3")
-		s.ChannelMessageSend(m.ChannelID, newUrl)
+	if TwitterURLRegex.MatchString(m.Content) {
+		for _, match := range TwitterURLRegex.FindAllStringSubmatch(m.Content, -1) {
+			user_id := match[2]
+			tweet_id := match[3]
+			url := fmt.Sprintf("%s/%s/status/%s", FxTwitterApiURL, user_id, tweet_id)
+			resp, err := http.Get(url)
+			if err != nil {
+				fmt.Println("error getting response,", err)
+				return
+			}
+
+			defer resp.Body.Close()
+			byteArray, _ := io.ReadAll(resp.Body)
+
+			jsonBytes := ([]byte)(byteArray)
+			data := new(Response)
+
+			if err := json.Unmarshal(jsonBytes, data); err != nil {
+				fmt.Println("JSON Unmarshal error:", err)
+				return
+			}
+			fmt.Println(data.Tweet.Text)
+
+			embeds := []*discordgo.MessageEmbed{}
+			embeds = append(embeds, &discordgo.MessageEmbed{
+				Title:       fmt.Sprintf("%s(@%s)", data.Tweet.Author.Name, data.Tweet.Author.ScreenName),
+				URL:         data.Tweet.URL,
+				Description: data.Tweet.Text,
+				Color:       0x1DA1F2,
+				Footer: &discordgo.MessageEmbedFooter{
+					Text: fmt.Sprintf("❤️: %d | 🔁: %d | 💬: %d | 👁️: %d", data.Tweet.Likes, data.Tweet.Retweets, data.Tweet.Replies, data.Tweet.Views),
+				},
+			})
+
+			if len(data.Tweet.Media.All) > 0 {
+				for _, media := range data.Tweet.Media.All {
+					embed := discordgo.MessageEmbed{
+						URL: data.Tweet.URL,
+					}
+					if media.Type == "photo" {
+						embed.Image = &discordgo.MessageEmbedImage{
+							URL: media.URL,
+						}
+					}
+					if media.Type == "video" {
+						embed.Image = &discordgo.MessageEmbedImage{
+							URL: media.ThumbnailURL,
+						}
+					}
+					embeds = append(embeds, &embed)
+				}
+			}
+
+			// s.ChannelMessageSendEmbeds(m.ChannelID, embeds)
+			// reply
+			s.ChannelMessageSendEmbedsReply(m.ChannelID, embeds, m.Reference())
+		}
 	}
 }
