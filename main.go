@@ -129,6 +129,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				Footer: &discordgo.MessageEmbedFooter{
 					Text: fmt.Sprintf("❤️: %d | 🔁: %d | 💬: %d | 👁️: %d", data.Tweet.Likes, data.Tweet.Retweets, data.Tweet.Replies, data.Tweet.Views),
 				},
+				Author: &discordgo.MessageEmbedAuthor{
+					Name:    data.Tweet.Author.Name,
+					URL:     data.Tweet.Author.URL,
+					IconURL: data.Tweet.Author.AvatarURL,
+				},
 			}
 
 			if data.Tweet.Media.Mosaic.Type == "mosaic_photo" {
