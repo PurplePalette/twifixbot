@@ -122,6 +122,7 @@ type Quote struct {
 	Lang             string       `json:"lang"`
 	ReplyingTo       string       `json:"replying_to"`
 	ReplyingToStatus *interface{} `json:"replying_to_status"`
+	Media            Media        `json:"media"`
 	Source           string       `json:"source"`
 	TwitterCard      string       `json:"twitter_card"`
 	Color            *interface{} `json:"color"`

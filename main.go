@@ -153,6 +153,28 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 					Width:  data.Tweet.Media.Videos[0].Width,
 				}
 			}
+			if data.Tweet.Quote != nil {
+				embed.Description = fmt.Sprintf("%s\n\n\n↘️ Quoting %s(@%s)\n%s", data.Tweet.Text, data.Tweet.Quote.Author.Name, data.Tweet.Quote.Author.ScreenName, data.Tweet.Quote.Text)
+				if embed.Image == nil && len(data.Tweet.Quote.Media.All) > 0 {
+					if data.Tweet.Quote.Media.Mosaic.Type == "mosaic_photo" {
+						embed.Image = &discordgo.MessageEmbedImage{
+							URL: data.Tweet.Quote.Media.Mosaic.Formats.JPEG,
+						}
+					} else if len(data.Tweet.Quote.Media.Photos) > 0 {
+						embed.Image = &discordgo.MessageEmbedImage{
+							URL:    data.Tweet.Quote.Media.Photos[0].URL,
+							Height: data.Tweet.Quote.Media.Photos[0].Height,
+							Width:  data.Tweet.Quote.Media.Photos[0].Width,
+						}
+					} else if len(data.Tweet.Quote.Media.Videos) > 0 {
+						embed.Image = &discordgo.MessageEmbedImage{
+							URL:    data.Tweet.Quote.Media.Videos[0].ThumbnailURL,
+							Height: data.Tweet.Quote.Media.Videos[0].Height,
+							Width:  data.Tweet.Quote.Media.Videos[0].Width,
+						}
+					}
+				}
+			}
 
 			// s.ChannelMessageSendEmbeds(m.ChannelID, embeds)
 			// reply
