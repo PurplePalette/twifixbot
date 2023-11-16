@@ -178,7 +178,14 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 			// s.ChannelMessageSendEmbeds(m.ChannelID, embeds)
 			// reply
-			s.ChannelMessageSendEmbedsReply(m.ChannelID, []*discordgo.MessageEmbed{&embed}, m.Reference())
+			// s.ChannelMessageSendEmbedsReply(m.ChannelID, []*discordgo.MessageEmbed{&embed}, m.Reference())
+			s.ChannelMessageSendComplex(m.ChannelID, &discordgo.MessageSend{
+				AllowedMentions: &discordgo.MessageAllowedMentions{
+					RepliedUser: false,
+				},
+				Embeds:    []*discordgo.MessageEmbed{&embed},
+				Reference: m.Reference(),
+			})
 		}
 	}
 }
