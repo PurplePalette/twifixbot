@@ -45,11 +45,27 @@ func main() {
 
 	// In this example, we only care about receiving message events.
 	dg.Identify.Intents = discordgo.IntentsGuildMessages
+	dg.Identify.Intents = discordgo.IntentsGuilds
 
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
 	if err != nil {
 		fmt.Println("error opening connection,", err)
+		return
+	}
+
+	// Get the all joined guilds.
+	guilds, err := dg.UserGuilds(100, "", "")
+	fmt.Println("Joined guilds:", len(guilds))
+	if err != nil {
+		fmt.Println("error getting guilds,", err)
+		return
+	}
+
+	// Update the game status.
+	err = dg.UpdateGameStatus(0, fmt.Sprintf("with %d guilds", len(guilds)))
+	if err != nil {
+		fmt.Println("error updating status,", err)
 		return
 	}
 
