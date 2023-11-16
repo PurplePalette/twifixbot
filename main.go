@@ -106,8 +106,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 			fmt.Println(data.Tweet.Text)
 
-			embeds := []*discordgo.MessageEmbed{}
-			embeds = append(embeds, &discordgo.MessageEmbed{
+			embed := discordgo.MessageEmbed{
 				Title:       fmt.Sprintf("%s(@%s)", data.Tweet.Author.Name, data.Tweet.Author.ScreenName),
 				URL:         data.Tweet.URL,
 				Description: data.Tweet.Text,
@@ -115,30 +114,29 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 				Footer: &discordgo.MessageEmbedFooter{
 					Text: fmt.Sprintf("❤️: %d | 🔁: %d | 💬: %d | 👁️: %d", data.Tweet.Likes, data.Tweet.Retweets, data.Tweet.Replies, data.Tweet.Views),
 				},
-			})
+			}
 
-			if len(data.Tweet.Media.All) > 0 {
-				for _, media := range data.Tweet.Media.All {
-					embed := discordgo.MessageEmbed{
-						URL: data.Tweet.URL,
-					}
-					if media.Type == "photo" {
-						embed.Image = &discordgo.MessageEmbedImage{
-							URL: media.URL,
-						}
-					}
-					if media.Type == "video" {
-						embed.Image = &discordgo.MessageEmbedImage{
-							URL: media.ThumbnailURL,
-						}
-					}
-					embeds = append(embeds, &embed)
+			if data.Tweet.Media.Mosaic.Type == "mosaic_photo" {
+				embed.Image = &discordgo.MessageEmbedImage{
+					URL: data.Tweet.Media.Mosaic.Formats.JPEG,
+				}
+			} else if len(data.Tweet.Media.Photos) > 0 {
+				embed.Image = &discordgo.MessageEmbedImage{
+					URL:    data.Tweet.Media.Photos[0].URL,
+					Height: data.Tweet.Media.Photos[0].Height,
+					Width:  data.Tweet.Media.Photos[0].Width,
+				}
+			} else if len(data.Tweet.Media.Videos) > 0 {
+				embed.Image = &discordgo.MessageEmbedImage{
+					URL:    data.Tweet.Media.Videos[0].ThumbnailURL,
+					Height: data.Tweet.Media.Videos[0].Height,
+					Width:  data.Tweet.Media.Videos[0].Width,
 				}
 			}
 
 			// s.ChannelMessageSendEmbeds(m.ChannelID, embeds)
 			// reply
-			s.ChannelMessageSendEmbedsReply(m.ChannelID, embeds, m.Reference())
+			s.ChannelMessageSendEmbedsReply(m.ChannelID, []*discordgo.MessageEmbed{&embed}, m.Reference())
 		}
 	}
 }
